@@ -51,7 +51,7 @@ export default function HomePage() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Shop by Category
+            Shop by Model
           </h1>
           <p className="text-lg text-gray-600">
             Discover our premium furniture collection
