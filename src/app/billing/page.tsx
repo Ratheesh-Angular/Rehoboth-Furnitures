@@ -7,10 +7,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { InvoiceDocument } from "@/components/invoice/InvoiceDocument";
+import {
+  PrintTypeModal,
+  type PrintType,
+} from "@/components/invoice/PrintTypeModal";
+import { type CompanyKey } from "@/lib/invoice/company-config";
+import { printInvoiceNode } from "@/lib/invoice/print-invoice";
 import { numberToWords } from "@/lib/utils/number-to-words";
 import { createInvoice, getCustomerProfiles } from "@/lib/api/invoice.api";
 import { getBillingItems } from "@/lib/api/billing-item.api";
 import { createPortal } from "react-dom";
+
 interface InvoiceItem {
   id: string;
   particulars: string;
@@ -20,56 +28,6 @@ interface InvoiceItem {
   rate: string;
   total: number;
 }
-
-type CompanyKey = "rehoboth" | "kirubai";
-
-const COMPANY_CONFIG: Record<
-  CompanyKey,
-  {
-    name: string;
-    addressLines: string[];
-    gstin: string;
-    stateCode: string;
-    state: string;
-    cell: string;
-    bankName: string;
-    accountNo: string;
-    ifsc: string;
-    branch: string;
-    motto: string;
-  }
-> = {
-  rehoboth: {
-    name: "REHOBOTH TIMBER AND FURNITURES",
-    addressLines: [
-      "121/5, St. Mary's Street, Maravankudiyiruppu, Nagercoil - 629 002. Kanyakumari District, Tamil Nadu",
-    ],
-    gstin: "33AMXPA0210F1ZO",
-    stateCode: "33",
-    state: "Tamil Nadu",
-    cell: "+91 99527 32233",
-    bankName: "Rehoboth Timber and Furniture",
-    accountNo: "005507777777777",
-    ifsc: "TMBL 0000005",
-    branch: "Nagercoil",
-    motto: "Karthar Nallavar",
-  },
-  kirubai: {
-    name: "KIRUBAI TIMBERS AND FURNITURE",
-    addressLines: [
-      "3/127D, Ramanputhoor Salai, Keezhakattuvilai, Pallam P.O., Nagercoil, Kanyakumari District, Tamil Nadu - 629 601.",
-    ],
-    gstin: "33CKWPR3858K1Z7",
-    stateCode: "33",
-    state: "Tamil Nadu",
-    cell: "",
-    bankName: "Kirubai Timbers and Furniture",
-    accountNo: "005531777777777",
-    ifsc: "TMBL 0000005",
-    branch: "Nagercoil",
-    motto: "Karthar Nallavar",
-  },
-};
 
 export default function BillingPage() {
   const printRef = useRef<HTMLDivElement>(null);
@@ -119,7 +77,6 @@ export default function BillingPage() {
   >([]);
   const [isBillingItemsLoading, setIsBillingItemsLoading] = useState(false);
 
-  const company = COMPANY_CONFIG[selectedCompany];
   const filteredCustomers = useMemo(() => {
     const query = customerSearch.trim().toLowerCase();
     if (!query) return customers;
@@ -141,9 +98,7 @@ export default function BillingPage() {
   >(null);
 
   const [isPrintTypeModalOpen, setIsPrintTypeModalOpen] = useState(false);
-  const [printType, setPrintType] = useState<"original" | "duplicate">(
-    "original",
-  );
+  const [printType, setPrintType] = useState<PrintType>("original");
 
   const addItem = () => {
     setItems([
@@ -210,59 +165,10 @@ export default function BillingPage() {
   const handlePrint = () => {
     const invoiceNode = printRef.current;
     if (!invoiceNode) return;
-
-    const printWindow = window.open("", "_blank", "width=900,height=1200");
-    if (!printWindow) {
+    const opened = printInvoiceNode(invoiceNode);
+    if (!opened) {
       toast.error("Unable to open print preview. Please allow pop-ups.");
-      return;
     }
-
-    const styles = Array.from(
-      document.querySelectorAll<HTMLStyleElement | HTMLLinkElement>(
-        'style, link[rel="stylesheet"]',
-      ),
-    )
-      .map((el) => el.outerHTML)
-      .join("\n");
-
-    printWindow.document.write(`
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Invoice Print</title>
-          ${styles}
-          <style>
-            @page { size: A4; margin: 0; }
-            html, body { margin: 0; padding: 0; background: #fff; }
-            body, body * { color: #000 !important; }
-            #invoice-print {
-              box-sizing: border-box !important;
-              width: 210mm !important;
-              min-height: 297mm !important;
-              padding: 10mm 8mm !important;
-            }
-            #invoice-print table thead {
-              display: table-header-group;
-            }
-            #invoice-print table tr {
-              break-inside: avoid;
-              page-break-inside: avoid;
-            }
-          </style>
-        </head>
-        <body>
-          ${invoiceNode.outerHTML}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onload = () => {
-      printWindow.print();
-      printWindow.close();
-    };
   };
 
   const handleSave = async () => {
@@ -967,61 +873,16 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {isPrintTypeModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-              <button
-                type="button"
-                onClick={() => setIsPrintTypeModalOpen(false)}
-                className="absolute top-3 right-3 cursor-pointer text-black/60 hover:text-black"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-              <h2 className="text-lg font-semibold mb-4 text-black">
-                Choose Print Type
-              </h2>
-
-              <div className="flex gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setPrintType("original")}
-                  className={`rounded px-3 py-2 text-sm font-medium border cursor-pointer ${
-                    printType === "original"
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-black border-black/40 hover:bg-neutral-100"
-                  }`}
-                >
-                  Original Bill
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrintType("duplicate")}
-                  className={`rounded px-3 py-2 text-sm font-medium border cursor-pointer ${
-                    printType === "duplicate"
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-black border-black/40 hover:bg-neutral-100"
-                  }`}
-                >
-                  Duplicate Bill
-                </button>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => {
-                    setIsPrintTypeModalOpen(false);
-                    handlePrint();
-                  }}
-                  className="bg-black hover:bg-neutral-900 cursor-pointer"
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  <span className="whitespace-nowrap">Print</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <PrintTypeModal
+          open={isPrintTypeModalOpen}
+          printType={printType}
+          onPrintTypeChange={setPrintType}
+          onClose={() => setIsPrintTypeModalOpen(false)}
+          onConfirm={() => {
+            setIsPrintTypeModalOpen(false);
+            handlePrint();
+          }}
+        />
 
         {/* Right: Invoice preview - 50% width */}
         <div className="flex-1 min-w-0 overflow-auto bg-stone-200/50 p-4">
@@ -1029,232 +890,27 @@ export default function BillingPage() {
             className="scale-[0.96] origin-top-left shadow-lg"
             style={{ width: 794, height: 1123 }}
           >
-            <div
-              id="invoice-print"
+            <InvoiceDocument
               ref={printRef}
-              className="bg-white p-8 mx-auto text-black flex flex-col"
-              style={{ width: "210mm", minHeight: "297mm" }}
-            >
-              {/* TAX INVOICE / ORIGINAL */}
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-semibold">TAX INVOICE</span>
-                <span className="text-sm font-semibold">
-                  {printType === "original" ? "ORIGINAL" : "DUPLICATE"}
-                </span>
-              </div>
-
-              {/* Header: Logo + Company */}
-              <div className="flex gap-4 mb-6 pb-4 border-b border-black">
-                {/* <div className="flex-shrink-0 w-16 h-16 rounded-full border-2 border-black flex items-center justify-center">
-                  <span className="text-xl font-bold">R</span>
-                </div> */}
-                <div className="flex-1">
-                  <p className="text-[10px] text-black mb-1">
-                    ✝ {company.motto}
-                  </p>
-                  <h1 className="text-xl font-bold uppercase tracking-tight">
-                    {company.name}
-                  </h1>
-                  <p className="text-sm my-2">GSTIN/UIN: {company.gstin}</p>
-                  <p className="text-sm mt-1 leading-tight">
-                    {company.addressLines.map((line, index) => (
-                      <span key={`${line}-${index}`}>
-                        {line}
-                        {index < company.addressLines.length - 1 ? (
-                          <br />
-                        ) : null}
-                      </span>
-                    ))}
-                  </p>
-                </div>
-                {/* <div className="text-right text-sm">
-                  <p className="font-medium">Cell: {COMPANY.cell}</p>
-                </div> */}
-              </div>
-
-              {/* Bill To / Buyer & Invoice Details */}
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mb-4 print:gap-x-2 print:gap-y-1">
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">GSTIN No:</span>
-                  {/* <span>{COMPANY.gstin}</span> */}
-                  <span className="border-b border-black flex-1 min-w-[80px]">
-                    {customerGstin}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">Invoice No:</span>
-                  <span className="border-b border-black flex-1">
-                    {invoiceNo}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">State Code:</span>
-                  {/* <span>{COMPANY.stateCode}</span> */}
-                  <span className="border-b border-black flex-1 min-w-[40px]">
-                    {customerStateCode}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">State:</span>
-                  {/* <span>{COMPANY.state}</span> */}
-                  <span className="border-b border-black flex-1 min-w-[80px]">
-                    {customerState}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">Buyer Name:</span>
-                  <span className="border-b border-black flex-1">
-                    {buyerName}
-                  </span>
-                </div>
-                {/* <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">GST No.:</span>
-                  <span className="border-b border-black flex-1">
-                    {customerGstin}
-                  </span>
-                </div> */}
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">Vehicle No.:</span>
-                  <span className="border-b border-black flex-1">
-                    {vehicleNo}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-24 flex-shrink-0">Date:</span>
-                  <span className="border-b border-black flex-1">{date}</span>
-                </div>
-                <div className="col-span-2 mt-2">
-                  <span className="block text-xs font-medium mb-1">
-                    Customer Address:
-                  </span>
-                  <p className="text-sm border-b border-black pb-1 min-h-[2.5rem] whitespace-pre-wrap">
-                    {buyerAddress || "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <div className="mb-4 border border-black min-h-[108mm] relative">
-                <div className="pointer-events-none absolute inset-0">
-                  <div className="absolute inset-y-0 left-[5%] border-l border-black" />
-                  <div className="absolute inset-y-0 left-[37%] border-l border-black" />
-                  <div className="absolute inset-y-0 left-[49%] border-l border-black" />
-                  <div className="absolute inset-y-0 left-[57%] border-l border-black" />
-                  <div className="absolute inset-y-0 left-[67%] border-l border-black" />
-                  <div className="absolute inset-y-0 left-[80%] border-l border-black" />
-                </div>
-                <table className="w-full border-collapse text-sm text-black relative z-10">
-                  <colgroup>
-                    <col style={{ width: "5%" }} />
-                    <col style={{ width: "32%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "8%" }} />
-                    <col style={{ width: "10%" }} />
-                    <col style={{ width: "13%" }} />
-                    <col style={{ width: "20%" }} />
-                  </colgroup>
-                  <thead>
-                    <tr className="text-[11px] uppercase tracking-wide text-black">
-                      <th className="border-b border-black px-3 py-2 text-center font-semibold">
-                        Sl. No.
-                      </th>
-                      <th className="border-b border-black px-3 py-2 text-left font-semibold">
-                        Particulars
-                      </th>
-                      <th className="border-b border-black px-3 py-2 font-semibold">
-                        HSN Code
-                      </th>
-                      <th className="border-b border-black px-3 py-2 font-semibold">
-                        UOM
-                      </th>
-                      <th className="border-b border-black px-3 py-2 text-right font-semibold">
-                        Qty.
-                      </th>
-                      <th className="border-b border-black px-3 py-2 text-right font-semibold">
-                        Rate
-                      </th>
-                      <th className="border-b border-black px-3 py-2 text-right font-semibold">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="align-top">
-                    {items.map((item, idx) => (
-                      <tr key={item.id}>
-                        <td className="px-3 py-2 text-center">{idx + 1}</td>
-                        <td className="px-3 py-2">{item.particulars}</td>
-                        <td className="px-3 py-2">{item.hsnCode}</td>
-                        <td className="px-3 py-2">{item.uom}</td>
-                        <td className="px-3 py-2 text-right">
-                          {item.qty || ""}
-                        </td>
-                        <td className="px-3 py-2 text-right">{item.rate}</td>
-                        <td className="px-3 py-2 text-right [font-variant-numeric:tabular-nums]">
-                          {item.total.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Summary + Total in Words */}
-              <div className="flex justify-between items-start mb-4 gap-4">
-                {/* Left: Total in Words */}
-                <div className="flex-1 text-sm">
-                  <p className="font-medium mb-1">Total Value in Words:</p>
-                  <p className="pb-1 break-words">{totalInWords}</p>
-                </div>
-
-                {/* Right: Tax Summary */}
-                <div className="w-64 space-y-1 text-sm shrink-0">
-                  <div className="flex justify-between">
-                    <span>TAXABLE VALUE:</span>
-                    <span>{taxableValue.toFixed(2)}</span>
-                  </div>
-                  {!useIgst && (
-                    <>
-                      <div className="flex justify-between">
-                        <span>CGST @ 9%:</span>
-                        <span>{cgst.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>SGST @ 9%:</span>
-                        <span>{sgst.toFixed(2)}</span>
-                      </div>
-                    </>
-                  )}
-                  {useIgst && (
-                    <div className="flex justify-between">
-                      <span>IGST @ 18%:</span>
-                      <span>{igst.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold pt-1 border-t border-black">
-                    <span>TOTAL VALUE:</span>
-                    <span>₹{totalValue.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex justify-between items-end pt-4 mt-auto">
-                <div className="text-sm">
-                  <p className="font-medium">{company.bankName}</p>
-                  <p>A/C. No.: {company.accountNo}</p>
-                  <p>IFSC: {company.ifsc}</p>
-                  <p>Branch: {company.branch}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs">Authorised Signatory</p>
-                  <p className="text-sm font-medium mb-0">
-                    {selectedCompany === "kirubai"
-                      ? "For Kirubai Timber and Furniture"
-                      : "For Rehoboth Timber and Furniture"}
-                  </p>
-                </div>
-              </div>
-            </div>
+              companyKey={selectedCompany}
+              printType={printType}
+              invoiceNo={invoiceNo}
+              date={date}
+              buyerName={buyerName}
+              buyerAddress={buyerAddress}
+              customerGstin={customerGstin}
+              customerStateCode={customerStateCode}
+              customerState={customerState}
+              vehicleNo={vehicleNo}
+              items={items}
+              useIgst={useIgst}
+              taxableValue={taxableValue}
+              cgst={cgst}
+              sgst={sgst}
+              igst={igst}
+              totalValue={totalValue}
+              totalInWords={totalInWords}
+            />
           </div>
         </div>
       </div>
