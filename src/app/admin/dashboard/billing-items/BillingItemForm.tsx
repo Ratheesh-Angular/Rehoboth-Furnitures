@@ -5,7 +5,7 @@ import { createBillingItem, updateBillingItem } from "@/lib/api/billing-item.api
 import { toast } from "sonner";
 
 interface BillingItemFormProps {
-  billingItem?: { id?: string; productName: string };
+  billingItem?: { id?: string; productName: string; hsnCode?: string };
   onSuccess?: () => void;
   onClose?: () => void;
 }
@@ -16,6 +16,7 @@ export default function BillingItemForm({
   onClose,
 }: BillingItemFormProps) {
   const [productName, setProductName] = useState(billingItem?.productName || "");
+  const [hsnCode, setHsnCode] = useState(billingItem?.hsnCode || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,13 +26,18 @@ export default function BillingItemForm({
       return;
     }
 
+    const payload = {
+      productName: productName.trim(),
+      hsnCode: hsnCode.trim(),
+    };
+
     try {
       setIsSubmitting(true);
       if (billingItem?.id) {
-        await updateBillingItem(billingItem.id, productName.trim());
+        await updateBillingItem(billingItem.id, payload);
         toast.success("Billing item updated successfully");
       } else {
-        await createBillingItem(productName.trim());
+        await createBillingItem(payload);
         toast.success("Billing item created successfully");
       }
 
@@ -62,6 +68,19 @@ export default function BillingItemForm({
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
           placeholder="Enter product name"
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2 font-medium text-gray-700">
+          HSN Code
+        </label>
+        <input
+          type="text"
+          value={hsnCode}
+          onChange={(e) => setHsnCode(e.target.value)}
+          placeholder="Enter HSN code"
           className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

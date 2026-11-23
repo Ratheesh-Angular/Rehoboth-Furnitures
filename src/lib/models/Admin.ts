@@ -1,7 +1,7 @@
 import mongoose, { Model, Document } from "mongoose";
 
 export interface IAdmin extends Document {
-  email: string;
+  username: string;
   password: string;
   createdAt: Date;
   updatedAt: Date;
@@ -9,7 +9,7 @@ export interface IAdmin extends Document {
 
 const adminSchema = new mongoose.Schema<IAdmin>(
   {
-    email: {
+    username: {
       type: String,
       required: true,
       unique: true,

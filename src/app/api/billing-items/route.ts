@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const body = await request.json();
     const productName = String(body?.productName || "").trim();
+    const hsnCode = String(body?.hsnCode || "").trim();
 
     if (!productName) {
       return NextResponse.json(
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const item = await BillingItem.create({ productName });
+    const item = await BillingItem.create({ productName, hsnCode });
     return NextResponse.json(
       {
         success: true,

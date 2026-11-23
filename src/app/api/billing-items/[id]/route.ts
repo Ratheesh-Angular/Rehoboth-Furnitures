@@ -11,6 +11,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const productName = String(body?.productName || "").trim();
+    const hsnCode = String(body?.hsnCode || "").trim();
 
     if (!productName) {
       return NextResponse.json(
@@ -38,7 +39,7 @@ export async function PUT(
 
     const updated = await BillingItem.findByIdAndUpdate(
       id,
-      { productName },
+      { productName, hsnCode },
       { new: true },
     );
 

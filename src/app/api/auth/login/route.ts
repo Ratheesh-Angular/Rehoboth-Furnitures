@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { email, password } = await request.json();
+    const { username, password } = await request.json();
 
     // Check if admin exists
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({ username });
     if (!admin) {
       return NextResponse.json({ message: "Admin not found" }, { status: 404 });
     }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         token,
         admin: {
           id: admin._id,
-          email: admin.email,
+          username: admin.username,
         },
       },
       { status: 200 }

@@ -68,13 +68,14 @@ export default function AdminBillingItemsPage() {
             <tr className="bg-stone-100 border-b">
               <th className="text-left px-4 py-3 w-24">S.No</th>
               <th className="text-left px-4 py-3">Product Name</th>
+              <th className="text-left px-4 py-3">HSN Code</th>
               <th className="text-left px-4 py-3 w-44">Actions</th>
             </tr>
           </thead>
           <tbody>
             {billingItems.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-center text-gray-500" colSpan={3}>
+                <td className="px-4 py-8 text-center text-gray-500" colSpan={4}>
                   No billing items found
                 </td>
               </tr>
@@ -83,6 +84,7 @@ export default function AdminBillingItemsPage() {
                 <tr key={item._id} className="border-b last:border-0">
                   <td className="px-4 py-3">{index + 1}</td>
                   <td className="px-4 py-3">{item.productName}</td>
+                  <td className="px-4 py-3">{item.hsnCode || "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
@@ -110,7 +112,11 @@ export default function AdminBillingItemsPage() {
         <BillingItemForm
           billingItem={
             editingItem
-              ? { id: editingItem._id, productName: editingItem.productName }
+              ? {
+                  id: editingItem._id,
+                  productName: editingItem.productName,
+                  hsnCode: editingItem.hsnCode || "",
+                }
               : undefined
           }
           onSuccess={fetchBillingItems}

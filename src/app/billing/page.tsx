@@ -114,7 +114,9 @@ export default function BillingPage() {
   >([]);
   const [isCustomersLoading, setIsCustomersLoading] = useState(false);
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
-  const [billingItemOptions, setBillingItemOptions] = useState<string[]>([]);
+  const [billingItemOptions, setBillingItemOptions] = useState<
+    { productName: string; hsnCode: string }[]
+  >([]);
   const [isBillingItemsLoading, setIsBillingItemsLoading] = useState(false);
 
   const company = COMPANY_CONFIG[selectedCompany];
@@ -378,16 +380,36 @@ export default function BillingPage() {
     setIsBillingItemsLoading(true);
     try {
       const response = await getBillingItems();
-      const names = (response.data || [])
-        .map((item) => String(item.productName || "").trim())
-        .filter(Boolean);
-      setBillingItemOptions(Array.from(new Set(names)));
+      const byName = new Map<string, { productName: string; hsnCode: string }>();
+      for (const item of response.data || []) {
+        const productName = String(item.productName || "").trim();
+        if (!productName || byName.has(productName)) continue;
+        byName.set(productName, {
+          productName,
+          hsnCode: String(item.hsnCode || "").trim(),
+        });
+      }
+      setBillingItemOptions(Array.from(byName.values()));
     } catch (error) {
       console.error("Failed to load billing items:", error);
       toast.error("Failed to load billing items");
     } finally {
       setIsBillingItemsLoading(false);
     }
+  };
+
+  const selectParticular = (
+    id: string,
+    productName: string,
+    hsnCode: string,
+  ) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, particulars: productName, hsnCode }
+          : item,
+      ),
+    );
   };
 
   useEffect(() => {
@@ -877,8 +899,8 @@ export default function BillingPage() {
                             );
                           }
 
-                          const filtered = billingItemOptions.filter((name) =>
-                            name
+                          const filtered = billingItemOptions.filter((option) =>
+                            option.productName
                               .toLowerCase()
                               .includes(activeItem.particulars.toLowerCase()),
                           );
@@ -888,24 +910,24 @@ export default function BillingPage() {
                               No items found. You can type a new item.
                             </p>
                           ) : (
-                            filtered.map((name) => (
+                            filtered.map((option) => (
                               <button
-                                key={`${activeItem.id}-${name}`}
+                                key={`${activeItem.id}-${option.productName}`}
                                 type="button"
                                 onMouseDown={(e) => {
                                   // onMouseDown fires before onBlur, so selection works correctly
                                   e.preventDefault();
-                                  updateItem(
+                                  selectParticular(
                                     activeItem.id,
-                                    "particulars",
-                                    name,
+                                    option.productName,
+                                    option.hsnCode,
                                   );
                                   setActiveParticularDropdownId(null);
                                   setDropdownPosition(null);
                                 }}
                                 className="w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0 hover:bg-black hover:text-white"
                               >
-                                {name}
+                                {option.productName}
                               </button>
                             ))
                           );

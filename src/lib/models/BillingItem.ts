@@ -2,6 +2,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IBillingItem extends Document {
   productName: string;
+  hsnCode: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -13,6 +14,11 @@ const BillingItemSchema = new Schema<IBillingItem>(
       required: true,
       trim: true,
       index: true,
+    },
+    hsnCode: {
+      type: String,
+      default: "",
+      trim: true,
     },
   },
   { timestamps: true },

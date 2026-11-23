@@ -7,13 +7,13 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [show, setShow] = useState(false);
   const [password, setPassword] = useState("");
   const handleLogin = async (e: any) => {
     e.preventDefault();
     try {
-      await adminLogin(email, password);
+      await adminLogin(username, password);
       router.push("/admin/dashboard");
       toast.success("Login successful!");
     } catch (err: any) {
@@ -28,11 +28,11 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <input
-            type="email"
-            placeholder="Email"
+            type="text"
+            placeholder="Username"
             className="w-full border p-2 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
 
           <div className="relative w-full">
