@@ -525,7 +525,7 @@ export default function BillingPage() {
                           key={`${customer.buyerName}-${customer.customerGstin}-${customer.vehicleNo}`}
                           type="button"
                           onClick={() => applyCustomer(customer)}
-                          className={`w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0 hover:text-white ${
+                          className={`w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0 ${
                             selectedCustomerName === customer.buyerName
                               ? "bg-neutral-100"
                               : "bg-white"
@@ -754,7 +754,7 @@ export default function BillingPage() {
                                             );
                                             setActiveParticularDropdownId(null);
                                           }}
-                                          className="w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0 hover:bg-black hover:text-white"
+                                          className="w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0"
                                         >
                                           {name}
                                         </button>
@@ -925,7 +925,7 @@ export default function BillingPage() {
                                   setActiveParticularDropdownId(null);
                                   setDropdownPosition(null);
                                 }}
-                                className="w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0 hover:bg-black hover:text-white"
+                                className="w-full px-3 py-2 text-left text-sm cursor-pointer border-b border-black/10 last:border-b-0"
                               >
                                 {option.productName}
                               </button>
@@ -1186,7 +1186,7 @@ export default function BillingPage() {
                         <td className="px-3 py-2">{item.hsnCode}</td>
                         <td className="px-3 py-2">{item.uom}</td>
                         <td className="px-3 py-2 text-right">
-                          {parseFloat(item.uom) || item.qty}
+                          {item.qty || ""}
                         </td>
                         <td className="px-3 py-2 text-right">{item.rate}</td>
                         <td className="px-3 py-2 text-right [font-variant-numeric:tabular-nums]">
