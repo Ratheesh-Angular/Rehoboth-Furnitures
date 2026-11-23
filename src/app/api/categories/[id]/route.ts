@@ -63,7 +63,10 @@ export async function PUT(
     const imageFile = formData.get("image") as File | null;
     if (imageFile) {
       const buffer = await imageFile.arrayBuffer();
-      const uploadResult = await uploadImage(buffer, "categories");
+      const uploadResult = await uploadImage(buffer, "categories", {
+        contentType: imageFile.type,
+        filename: imageFile.name,
+      });
       imageUrl = uploadResult.secure_url;
     }
 

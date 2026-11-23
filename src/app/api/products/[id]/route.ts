@@ -90,7 +90,10 @@ export async function PUT(
     const imageFiles = formData.getAll("images") as File[];
     for (const file of imageFiles) {
       const buffer = await file.arrayBuffer();
-      const uploadResult = await uploadImage(buffer, "products");
+      const uploadResult = await uploadImage(buffer, "products", {
+        contentType: file.type,
+        filename: file.name,
+      });
       imageUrls.push(uploadResult.secure_url);
     }
 
@@ -98,7 +101,10 @@ export async function PUT(
     const dimensionFile = formData.get("dimensionImage") as File | null;
     if (dimensionFile) {
       const buffer = await dimensionFile.arrayBuffer();
-      const uploadResult = await uploadImage(buffer, "products/dimensions");
+      const uploadResult = await uploadImage(buffer, "products/dimensions", {
+        contentType: dimensionFile.type,
+        filename: dimensionFile.name,
+      });
       dimensionImageUrl = uploadResult.secure_url;
     }
 
