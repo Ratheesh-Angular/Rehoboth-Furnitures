@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: furniture-frontend
+    runtime: node
+    region: oregon
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      NEXT_PUBLIC_API_URL: https://your-backfrontend-url.onrender.com
