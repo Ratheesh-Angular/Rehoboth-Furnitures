@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     siteName: "Kirubai Furniture",
     images: [
       {
-        url: "https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png",
+        url: "https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png",
         width: 1200,
         height: 630,
       },

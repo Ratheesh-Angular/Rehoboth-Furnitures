@@ -7,25 +7,25 @@ export default function OurTeam() {
       name: "Ramesh Kumar",
       role: "Founder & Chief Designer",
       image:
-        "https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png",
+        "https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png",
     },
     {
       name: "Priya Sharma",
       role: "Head of Operations",
       image:
-        "https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png",
+        "https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png",
     },
     {
       name: "Arjun Patel",
       role: "Master Craftsman",
       image:
-        "https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png",
+        "https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png",
     },
     {
       name: "Meera Reddy",
       role: "Customer Relations Manager",
       image:
-        "https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png",
+        "https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png",
     },
   ];
 

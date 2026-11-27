@@ -35,7 +35,7 @@ export default function OurStory() {
       {/* Banner Section */}
       <div className="w-full h-64 sm:h-80 md:h-96 overflow-hidden">
         <img
-          src="https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764508620/categories/tsgyoxjspebgjh8fdjod.jpg"
+          src="https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/categories/tsgyoxjspebgjh8fdjod.jpg"
           alt="About Kirubai Furnitures"
           className="w-full h-full object-cover"
         />

@@ -46,8 +46,8 @@ export default function Header() {
             className="flex items-center transition-transform hover:scale-105"
           >
             <img
-              src="https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png"
-              alt="Rehoboth Furnitures"
+              src="https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png"
+              alt="Kirubai Furniture"
               className="h-12 sm:h-14 md:h-16 w-auto object-contain"
             />
           </Link>
@@ -121,8 +121,8 @@ export default function Header() {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <img
-              src="https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png"
-              alt="Rehoboth Furnitures"
+              src="https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png"
+              alt="Kirubai Furniture"
               className="h-10 w-auto object-contain"
             />
             <button

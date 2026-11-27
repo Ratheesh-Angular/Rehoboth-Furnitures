@@ -10,8 +10,8 @@ export default function Footer() {
         {/* Logo and Description */}
         <div className="mb-8 text-center lg:text-left">
           <img
-            src="https://res.cloudinary.com/dzk3mhoqu/image/upload/v1764329428/Screenshot_2025-11-28_165645_w9zgz7.png"
-            alt="Rehoboth Furnitures"
+            src="https://pub-ae5cb2d60de64e2db81bed008da88079.r2.dev/brand/logo.png"
+            alt="Kirubai Furniture"
             className="h-14 sm:h-16 w-auto object-contain mx-auto lg:mx-0 mb-4"
           />
           <p className="text-sm text-gray-600 max-w-md mx-auto lg:mx-0">
