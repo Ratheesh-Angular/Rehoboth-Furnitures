@@ -142,15 +142,38 @@ export default function AdminInvoicesPage() {
         }
         const html2pdfModule = await import("html2pdf.js");
         const html2pdf = html2pdfModule.default || html2pdfModule;
+        const safeNo = (invoice.invoiceNo || invoice._id || "invoice")
+          .toString()
+          .replace(/[^a-zA-Z0-9-_]+/g, "-");
         await html2pdf()
           .set({
             margin: 0,
-            filename: `Invoice-${invoice.invoiceNo || invoice._id}.pdf`,
+            filename: `Invoice-${safeNo}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: "#ffffff",
+              onclone: (clonedDoc: Document) => {
+                // Strip Tailwind v4 global stylesheets that use oklch()/lab() colors,
+                // which crash html2canvas. The inline #pdf-wrapper stylesheet keeps the layout intact.
+                clonedDoc
+                  .querySelectorAll('style, link[rel="stylesheet"]')
+                  .forEach((el) => {
+                    if (!el.textContent?.includes("#pdf-wrapper")) {
+                      el.remove();
+                    }
+                  });
+                clonedDoc.documentElement.style.backgroundColor = "#ffffff";
+                clonedDoc.body.style.backgroundColor = "#ffffff";
+              },
+            },
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
             // @ts-expect-error pagebreak is supported by html2pdf at runtime but missing from its type definitions
-            pagebreak: { mode: ["css", "legacy"], before: ".invoice-pdf-duplicate" },
+            pagebreak: {
+              mode: ["css", "legacy"],
+              before: ".invoice-pdf-duplicate",
+            },
           })
           .from(pdfNode)
           .save();
@@ -159,6 +182,9 @@ export default function AdminInvoicesPage() {
         console.error("Failed to generate invoice PDF:", error);
         toast.error("Failed to download invoice");
       } finally {
+        document
+          .querySelectorAll(".html2pdf__overlay, .html2pdf__container")
+          .forEach((el) => el.remove());
         setDownloadJob(null);
         setDownloadingId(null);
       }
@@ -544,7 +570,102 @@ export default function AdminInvoicesPage() {
           aria-hidden
           className="pointer-events-none fixed left-[-10000px] top-0"
         >
-          <div ref={pdfRef} className="bg-white">
+          <div id="pdf-wrapper" ref={pdfRef}>
+            <style>{`
+              #pdf-wrapper { background: #ffffff; color: #000000; font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; }
+              #pdf-wrapper *, #pdf-wrapper *::before, #pdf-wrapper *::after { box-sizing: border-box; border-color: #000000; outline-color: transparent; }
+              #pdf-wrapper .bg-white { background-color: #ffffff; }
+              #pdf-wrapper .p-8 { padding: 32px; }
+              #pdf-wrapper .mx-auto { margin-left: auto; margin-right: auto; }
+              #pdf-wrapper .text-black { color: #000000; }
+              #pdf-wrapper .flex { display: flex; }
+              #pdf-wrapper .flex-col { flex-direction: column; }
+              #pdf-wrapper .flex-1 { flex: 1 1 0%; }
+              #pdf-wrapper .shrink-0, #pdf-wrapper .flex-shrink-0 { flex-shrink: 0; }
+              #pdf-wrapper .justify-between { justify-content: space-between; }
+              #pdf-wrapper .items-start { align-items: flex-start; }
+              #pdf-wrapper .items-end { align-items: flex-end; }
+              #pdf-wrapper .gap-4 { gap: 16px; }
+              #pdf-wrapper .gap-2 { gap: 8px; }
+              #pdf-wrapper .gap-x-8 { column-gap: 32px; }
+              #pdf-wrapper .gap-y-2 { row-gap: 8px; }
+              #pdf-wrapper .mb-0 { margin-bottom: 0; }
+              #pdf-wrapper .mb-1 { margin-bottom: 4px; }
+              #pdf-wrapper .mb-4 { margin-bottom: 16px; }
+              #pdf-wrapper .mb-6 { margin-bottom: 24px; }
+              #pdf-wrapper .mt-1 { margin-top: 4px; }
+              #pdf-wrapper .mt-2 { margin-top: 8px; }
+              #pdf-wrapper .mt-auto { margin-top: auto; }
+              #pdf-wrapper .my-2 { margin-top: 8px; margin-bottom: 8px; }
+              #pdf-wrapper .pb-1 { padding-bottom: 4px; }
+              #pdf-wrapper .pb-4 { padding-bottom: 16px; }
+              #pdf-wrapper .pt-1 { padding-top: 4px; }
+              #pdf-wrapper .pt-4 { padding-top: 16px; }
+              #pdf-wrapper .px-3 { padding-left: 12px; padding-right: 12px; }
+              #pdf-wrapper .py-2 { padding-top: 8px; padding-bottom: 8px; }
+              #pdf-wrapper .border { border: 1px solid #000000; }
+              #pdf-wrapper .border-b { border-bottom: 1px solid #000000; }
+              #pdf-wrapper .border-t { border-top: 1px solid #000000; }
+              #pdf-wrapper .border-l { border-left: 1px solid #000000; }
+              #pdf-wrapper .border-black { border-color: #000000; }
+              #pdf-wrapper .text-\\[10px\\] { font-size: 10px; line-height: 14px; }
+              #pdf-wrapper .text-\\[11px\\] { font-size: 11px; line-height: 15px; }
+              #pdf-wrapper .text-xs { font-size: 12px; line-height: 16px; }
+              #pdf-wrapper .text-sm { font-size: 14px; line-height: 20px; }
+              #pdf-wrapper .text-xl { font-size: 20px; line-height: 28px; }
+              #pdf-wrapper .font-medium { font-weight: 500; }
+              #pdf-wrapper .font-semibold { font-weight: 600; }
+              #pdf-wrapper .font-bold { font-weight: 700; }
+              #pdf-wrapper .uppercase { text-transform: uppercase; }
+              #pdf-wrapper .tracking-tight { letter-spacing: -0.025em; }
+              #pdf-wrapper .tracking-wide { letter-spacing: 0.025em; }
+              #pdf-wrapper .leading-tight { line-height: 1.25; }
+              #pdf-wrapper .grid { display: grid; }
+              #pdf-wrapper .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              #pdf-wrapper .col-span-2 { grid-column: span 2 / span 2; }
+              #pdf-wrapper .w-24 { width: 96px; }
+              #pdf-wrapper .w-64 { width: 256px; }
+              #pdf-wrapper .w-full { width: 100%; }
+              #pdf-wrapper .min-w-\\[40px\\] { min-width: 40px; }
+              #pdf-wrapper .min-w-\\[80px\\] { min-width: 80px; }
+              #pdf-wrapper .min-h-\\[2\\.5rem\\] { min-height: 40px; }
+              #pdf-wrapper .min-h-\\[108mm\\] { min-height: 95mm; }
+              #pdf-wrapper .block { display: block; }
+              #pdf-wrapper .whitespace-pre-wrap { white-space: pre-wrap; }
+              #pdf-wrapper .break-words { word-break: break-word; overflow-wrap: break-word; }
+              #pdf-wrapper .relative { position: relative; }
+              #pdf-wrapper .absolute { position: absolute; }
+              #pdf-wrapper .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+              #pdf-wrapper .inset-y-0 { top: 0; bottom: 0; }
+              #pdf-wrapper .pointer-events-none { pointer-events: none; }
+              #pdf-wrapper .z-10 { z-index: 10; }
+              #pdf-wrapper .left-\\[5\\%\\] { left: 5%; }
+              #pdf-wrapper .left-\\[37\\%\\] { left: 37%; }
+              #pdf-wrapper .left-\\[49\\%\\] { left: 49%; }
+              #pdf-wrapper .left-\\[57\\%\\] { left: 57%; }
+              #pdf-wrapper .left-\\[67\\%\\] { left: 67%; }
+              #pdf-wrapper .left-\\[80\\%\\] { left: 80%; }
+              #pdf-wrapper .border-collapse { border-collapse: collapse; }
+              #pdf-wrapper .align-top { vertical-align: top; }
+              #pdf-wrapper .text-center { text-align: center; }
+              #pdf-wrapper .text-left { text-align: left; }
+              #pdf-wrapper .text-right { text-align: right; }
+              #pdf-wrapper .\\[font-variant-numeric\\:tabular-nums\\] { font-variant-numeric: tabular-nums; }
+              #pdf-wrapper .space-y-1 > * + * { margin-top: 4px; }
+              #pdf-wrapper p, #pdf-wrapper h1 { margin-top: 0; }
+              #pdf-wrapper .invoice-pdf-page > div {
+                width: 210mm !important;
+                min-height: 295mm !important;
+                height: 295mm !important;
+                max-height: 295mm !important;
+                padding: 8mm 8mm !important;
+                overflow: hidden !important;
+              }
+              #pdf-wrapper .invoice-pdf-duplicate {
+                page-break-before: always;
+                break-before: page;
+              }
+            `}</style>
             <div className="invoice-pdf-page">
               <InvoiceDocument {...getDocProps(downloadJob)} printType="original" />
             </div>
