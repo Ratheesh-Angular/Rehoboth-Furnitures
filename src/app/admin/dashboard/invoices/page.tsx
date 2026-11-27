@@ -87,6 +87,9 @@ export default function AdminInvoicesPage() {
     invoice: Invoice;
     printType: PrintType;
   } | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadJob, setDownloadJob] = useState<Invoice | null>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   const loadInvoices = async (company: CompanyKey = selectedCompany) => {
     setLoading(true);
@@ -125,6 +128,73 @@ export default function AdminInvoicesPage() {
 
     return () => window.clearTimeout(timer);
   }, [printJob]);
+
+  useEffect(() => {
+    if (!downloadJob) return;
+
+    // Wait until the off-screen Original + Duplicate template is mounted.
+    const timer = window.setTimeout(async () => {
+      const invoice = downloadJob;
+      try {
+        const pdfNode = pdfRef.current;
+        if (!pdfNode) {
+          throw new Error("Invoice template is not ready");
+        }
+        const html2pdfModule = await import("html2pdf.js");
+        const html2pdf = html2pdfModule.default || html2pdfModule;
+        await html2pdf()
+          .set({
+            margin: 0,
+            filename: `Invoice-${invoice.invoiceNo || invoice._id}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            // @ts-expect-error pagebreak is supported by html2pdf at runtime but missing from its type definitions
+            pagebreak: { mode: ["css", "legacy"], before: ".invoice-pdf-duplicate" },
+          })
+          .from(pdfNode)
+          .save();
+        toast.success("Invoice downloaded");
+      } catch (error) {
+        console.error("Failed to generate invoice PDF:", error);
+        toast.error("Failed to download invoice");
+      } finally {
+        setDownloadJob(null);
+        setDownloadingId(null);
+      }
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [downloadJob]);
+
+  const getDocProps = (invoice: Invoice) => {
+    const totalValue = Number(invoice.totalValue || 0);
+    return {
+      companyKey: (invoice.company === "kirubai" ? "kirubai" : "rehoboth") as CompanyKey,
+      date: invoice.date || normalizeDate(invoice.createdAt),
+      invoiceNo: invoice.invoiceNo || "",
+      buyerName: invoice.buyerName || "",
+      buyerAddress: invoice.buyerAddress || "",
+      customerGstin: invoice.customerGstin || "",
+      customerStateCode: invoice.customerStateCode || "",
+      customerState: invoice.customerState || "",
+      vehicleNo: invoice.vehicleNo || "",
+      items: invoice.items || [],
+      useIgst: Boolean(invoice.useIgst),
+      taxableValue: Number(invoice.taxableValue || 0),
+      cgst: Number(invoice.cgst || 0),
+      sgst: Number(invoice.sgst || 0),
+      igst: Number(invoice.igst || 0),
+      totalValue,
+      totalInWords: numberToWords(totalValue),
+    };
+  };
+
+  const downloadInvoicePdf = (invoice: Invoice) => {
+    if (downloadingId) return;
+    setDownloadingId(invoice._id);
+    setDownloadJob(invoice);
+  };
 
   const openPrintModal = (invoice: Invoice) => {
     setPendingInvoice(invoice);
@@ -422,7 +492,8 @@ export default function AdminInvoicesPage() {
                           variant="outline"
                           size="sm"
                           className="cursor-pointer"
-                          onClick={() => openPrintModal(invoice)}
+                          onClick={() => downloadInvoicePdf(invoice)}
+                          disabled={downloadingId === invoice._id}
                           title={`Download invoice ${invoice.invoiceNo}`}
                         >
                           <Download className="h-4 w-4" />
@@ -466,6 +537,23 @@ export default function AdminInvoicesPage() {
         }}
         onConfirm={confirmPrint}
       />
+
+      {/* Off-screen mount for the combined Original + Duplicate download PDF */}
+      {downloadJob && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed left-[-10000px] top-0"
+        >
+          <div ref={pdfRef} className="bg-white">
+            <div className="invoice-pdf-page">
+              <InvoiceDocument {...getDocProps(downloadJob)} printType="original" />
+            </div>
+            <div className="invoice-pdf-page invoice-pdf-duplicate">
+              <InvoiceDocument {...getDocProps(downloadJob)} printType="duplicate" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Off-screen mount of the shared billing invoice template for print/download */}
       {activePrintInvoice && (
